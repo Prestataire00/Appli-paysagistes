@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Replicate from "replicate";
 
-export const maxDuration = 60;
-
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
 });
@@ -22,8 +20,8 @@ function isRateLimited(ip: string): boolean {
   return false;
 }
 
+// POST: Start a prediction (async — returns prediction ID immediately)
 export async function POST(request: NextRequest) {
-  // Rate limiting
   const ip = request.headers.get("x-forwarded-for") || "unknown";
   if (isRateLimited(ip)) {
     return NextResponse.json(
@@ -42,7 +40,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate base64 image
     if (!image.startsWith("data:image/")) {
       return NextResponse.json(
         { error: "Format d'image invalide." },
@@ -50,56 +47,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build instruction — combine selected services + custom request
     const changes: string[] = [];
     if (prompts) changes.push(prompts);
     if (customRequest) changes.push(customRequest);
 
     const instruction = `Transform this outdoor space photo into a beautifully renovated garden. Make these visible changes: ${changes.join(". ")}. Show the transformation clearly — the changes should be obvious and dramatic while keeping the same camera angle. Photorealistic, professional landscaping result, high quality.`;
 
-    console.log("Starting generation with instruction:", instruction);
+    // Create prediction async (does NOT wait for result)
+    const prediction = await replicate.predictions.create({
+      model: "black-forest-labs/flux-kontext-pro",
+      input: {
+        prompt: instruction,
+        input_image: image,
+        guidance_scale: 7,
+        output_format: "png",
+        safety_tolerance: 5,
+      },
+    });
 
-    const output = await replicate.run(
-      "black-forest-labs/flux-kontext-pro",
-      {
-        input: {
-          prompt: instruction,
-          input_image: image,
-          guidance_scale: 7,
-          output_format: "png",
-          safety_tolerance: 5,
-        },
-      }
-    );
-
-    console.log("Replicate output:", JSON.stringify(output, null, 2));
-
-    // Replicate SDK v1+ returns FileOutput objects
-    // Extract the URL string from the output
-    let resultUrl: string | null = null;
-
-    if (Array.isArray(output) && output.length > 0) {
-      const first = output[0];
-      // FileOutput has a .url() method or can be converted to string
-      if (typeof first === "string") {
-        resultUrl = first;
-      } else if (first && typeof first === "object") {
-        // FileOutput object — convert to string to get URL
-        resultUrl = String(first);
-      }
-    } else if (typeof output === "string") {
-      resultUrl = output;
-    } else if (output && typeof output === "object") {
-      resultUrl = String(output);
-    }
-
-    if (!resultUrl) {
-      throw new Error("Aucune image générée par le modèle.");
-    }
-
-    console.log("Result URL:", resultUrl);
-
-    return NextResponse.json({ url: resultUrl });
+    // Return prediction ID immediately (no timeout risk)
+    return NextResponse.json({ predictionId: prediction.id });
   } catch (error) {
     console.error("Generation error:", error);
     const message =

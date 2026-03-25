@@ -61,6 +61,7 @@ export default function Home() {
         .filter(Boolean)
         .join(", ");
 
+      // Step 1: Start the prediction (returns immediately)
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -75,8 +76,11 @@ export default function Home() {
         throw new Error("Erreur lors de la génération.");
       }
 
-      const data = await res.json();
-      setGeneratedUrl(data.url);
+      const { predictionId } = await res.json();
+
+      // Step 2: Poll for result every 2 seconds
+      const result = await pollPrediction(predictionId);
+      setGeneratedUrl(result);
       setStep("result");
     } catch (err) {
       setError(
@@ -479,6 +483,25 @@ function Stepper({ current }: { current: number }) {
       ))}
     </div>
   );
+}
+
+async function pollPrediction(predictionId: string): Promise<string> {
+  const maxAttempts = 60; // 2 minutes max
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise((r) => setTimeout(r, 2000));
+
+    const res = await fetch(`/api/prediction?id=${predictionId}`);
+    const data = await res.json();
+
+    if (data.status === "succeeded" && data.url) {
+      return data.url;
+    }
+    if (data.status === "failed") {
+      throw new Error(data.error || "La génération a échoué.");
+    }
+    // "starting" or "processing" → continue polling
+  }
+  throw new Error("La génération a pris trop de temps.");
 }
 
 function fileToBase64(file: File): Promise<string> {

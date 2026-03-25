@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { Camera, Upload, X } from "lucide-react";
+import { Camera, Upload, X, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface PhotoUploadProps {
@@ -15,7 +15,8 @@ export default function PhotoUpload({
   preview,
   onClear,
 }: PhotoUploadProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
   const handleFile = useCallback(
@@ -68,7 +69,7 @@ export default function PhotoUpload({
         }}
         onDragLeave={() => setDragActive(false)}
         onDrop={handleDrop}
-        onClick={() => inputRef.current?.click()}
+        onClick={() => galleryInputRef.current?.click()}
         className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${
           dragActive
             ? "border-[#2E7D32] bg-green-50"
@@ -84,8 +85,21 @@ export default function PhotoUpload({
         </p>
       </div>
 
+      {/* Input galerie (sans capture = ouvre le choix galerie/fichiers) */}
       <input
-        ref={inputRef}
+        ref={galleryInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFile(file);
+        }}
+      />
+
+      {/* Input caméra (avec capture = ouvre directement la caméra) */}
+      <input
+        ref={cameraInputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp"
         capture="environment"
@@ -96,10 +110,18 @@ export default function PhotoUpload({
         }}
       />
 
-      <div className="mt-4 flex justify-center">
+      <div className="mt-4 flex justify-center gap-3">
         <Button
           variant="outline"
-          onClick={() => inputRef.current?.click()}
+          onClick={() => galleryInputRef.current?.click()}
+          className="gap-2"
+        >
+          <ImageIcon className="w-4 h-4" />
+          Galerie photo
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => cameraInputRef.current?.click()}
           className="gap-2"
         >
           <Camera className="w-4 h-4" />

@@ -23,6 +23,18 @@ function isRateLimited(ip: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
+  // Debug: Check if API token is available
+  const apiToken = process.env.REPLICATE_API_TOKEN;
+  console.log("[v0] REPLICATE_API_TOKEN exists:", !!apiToken);
+  console.log("[v0] REPLICATE_API_TOKEN length:", apiToken?.length || 0);
+  
+  if (!apiToken) {
+    return NextResponse.json(
+      { error: "Configuration manquante: REPLICATE_API_TOKEN n'est pas défini." },
+      { status: 500 }
+    );
+  }
+
   // Rate limiting
   const ip = request.headers.get("x-forwarded-for") || "unknown";
   if (isRateLimited(ip)) {

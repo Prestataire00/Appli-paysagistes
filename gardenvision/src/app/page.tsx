@@ -5,6 +5,8 @@ import PhotoUpload from "@/components/PhotoUpload";
 import ServiceSelector, { SERVICES } from "@/components/ServiceSelector";
 import GenerationLoader from "@/components/GenerationLoader";
 import ResultView from "@/components/ResultView";
+import History from "@/components/History";
+import { addToHistory, type HistoryEntry } from "@/lib/history";
 import { Button } from "@/components/ui/button";
 import {
   Sparkles,
@@ -13,9 +15,10 @@ import {
   CheckCircle,
   ArrowRight,
   Wand2,
+  Clock,
 } from "lucide-react";
 
-type Step = "landing" | "upload" | "services" | "loading" | "result";
+type Step = "landing" | "upload" | "services" | "loading" | "result" | "history";
 
 export default function Home() {
   const [step, setStep] = useState<Step>("landing");
@@ -81,6 +84,19 @@ export default function Home() {
       // Step 2: Poll for result every 2 seconds
       const result = await pollPrediction(predictionId);
       setGeneratedUrl(result);
+
+      // Save to history
+      if (preview) {
+        addToHistory({
+          originalUrl: preview,
+          generatedUrl: result,
+          services: selectedServices.map(
+            (code) => SERVICES.find((s) => s.code === code)?.label || code
+          ),
+          customRequest: customRequest.trim() || undefined,
+        });
+      }
+
       setStep("result");
     } catch (err) {
       setError(
@@ -108,6 +124,18 @@ export default function Home() {
     setStep("services");
   };
 
+  const handleViewHistoryEntry = (entry: HistoryEntry) => {
+    setPreview(entry.originalUrl);
+    setGeneratedUrl(entry.generatedUrl);
+    setSelectedServices(
+      entry.services
+        .map((label) => SERVICES.find((s) => s.label === label)?.code)
+        .filter(Boolean) as string[]
+    );
+    setCustomRequest(entry.customRequest || "");
+    setStep("result");
+  };
+
   return (
     <main className="min-h-screen flex flex-col bg-[#F9FBF7]">
       {/* Header */}
@@ -129,16 +157,29 @@ export default function Home() {
               </p>
             </div>
           </button>
-          {step !== "landing" && step !== "loading" && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleReset}
-              className="text-xs"
-            >
-              Nouvelle session
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {step !== "loading" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setStep("history")}
+                className="gap-1.5 text-xs text-gray-500"
+              >
+                <Clock className="w-4 h-4" />
+                Historique
+              </Button>
+            )}
+            {step !== "landing" && step !== "loading" && step !== "history" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleReset}
+                className="text-xs"
+              >
+                Nouvelle session
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -390,6 +431,14 @@ export default function Home() {
           <div className="max-w-2xl mx-auto px-4 py-10">
             <GenerationLoader preview={preview} />
           </div>
+        )}
+
+        {/* ===== HISTORY ===== */}
+        {step === "history" && (
+          <History
+            onBack={() => setStep("landing")}
+            onViewEntry={handleViewHistoryEntry}
+          />
         )}
 
         {/* ===== RESULT ===== */}

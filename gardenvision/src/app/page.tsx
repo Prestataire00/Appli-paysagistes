@@ -75,11 +75,13 @@ export default function Home() {
         }),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        throw new Error("Erreur lors de la génération.");
+        throw new Error(data.error || "Erreur lors de la génération.");
       }
 
-      const { predictionId } = await res.json();
+      const { predictionId } = data;
 
       // Step 2: Poll for result every 2 seconds
       const result = await pollPrediction(predictionId);

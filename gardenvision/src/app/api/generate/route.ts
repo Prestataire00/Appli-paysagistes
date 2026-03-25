@@ -31,6 +31,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    if (!process.env.REPLICATE_API_TOKEN) {
+      return NextResponse.json(
+        { error: "Clé API Replicate non configurée." },
+        { status: 500 }
+      );
+    }
+
     const { image, prompts, customRequest } = await request.json();
 
     if (!image || (!prompts && !customRequest)) {

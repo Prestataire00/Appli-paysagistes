@@ -43,16 +43,77 @@ export default function ResultView({
   };
 
   const handleDownload = async () => {
-    const res = await fetch(generatedUrl);
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `gardenvision-${Date.now()}.png`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setDownloaded(true);
-    setTimeout(() => setDownloaded(false), 3000);
+    try {
+      // Load both images
+      const [beforeImg, afterImg] = await Promise.all([
+        loadImage(originalUrl),
+        loadImage(generatedUrl),
+      ]);
+
+      // Create composite canvas (before | after side by side)
+      const labelHeight = 48;
+      const gap = 4;
+      const w = beforeImg.naturalWidth + afterImg.naturalWidth + gap;
+      const h = Math.max(beforeImg.naturalHeight, afterImg.naturalHeight) + labelHeight;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d")!;
+
+      // Background
+      ctx.fillStyle = "#F9FBF7";
+      ctx.fillRect(0, 0, w, h);
+
+      // Draw "AVANT" label bar
+      ctx.fillStyle = "#1C1C1C";
+      ctx.fillRect(0, 0, beforeImg.naturalWidth, labelHeight);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = `bold ${Math.round(labelHeight * 0.45)}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("AVANT", beforeImg.naturalWidth / 2, labelHeight / 2);
+
+      // Draw "APRÈS" label bar
+      ctx.fillStyle = "#2E7D32";
+      ctx.fillRect(beforeImg.naturalWidth + gap, 0, afterImg.naturalWidth, labelHeight);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(
+        "APRÈS",
+        beforeImg.naturalWidth + gap + afterImg.naturalWidth / 2,
+        labelHeight / 2
+      );
+
+      // Draw images
+      ctx.drawImage(beforeImg, 0, labelHeight);
+      ctx.drawImage(afterImg, beforeImg.naturalWidth + gap, labelHeight);
+
+      // Download
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `gardenvision-avant-apres-${Date.now()}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }, "image/png");
+
+      setDownloaded(true);
+      setTimeout(() => setDownloaded(false), 3000);
+    } catch {
+      // Fallback: download generated image only
+      const res = await fetch(generatedUrl);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `gardenvision-${Date.now()}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setDownloaded(true);
+      setTimeout(() => setDownloaded(false), 3000);
+    }
   };
 
   const handleShare = async () => {
@@ -189,4 +250,14 @@ export default function ResultView({
       </div>
     </div>
   );
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
 }

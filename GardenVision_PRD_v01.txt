@@ -1,0 +1,292 @@
+🌿 GardenVision
+Product Requirements Document
+Application de visualisation IA pour commerciaux paysagistes
+Référence
+PRD-GV-2026-001
+Version
+v0.1 – Démo
+Date
+Mars 2026
+Auteur
+IA INFINITY
+Statut
+🔄 En cours de rédaction
+
+1. Résumé exécutif
+
+GardenVision est une application web légère destinée aux commerciaux des entreprises de paysagisme. Elle permet de générer, en quelques secondes et depuis n'importe quel appareil, une visualisation "avant/après" d'un espace extérieur à partir d'une photo réelle du client — en intégrant les effets visuels des prestations proposées (tonte, taille de haies, aménagement de massifs, etc.).
+
+L'objectif est d'accélérer la prise de décision client en rendant la proposition de valeur immédiatement tangible, lors d'un rendez-vous commercial sur site ou en agence.
+2. Problématique & Opportunité
+
+2.1 Problème identifié
+	•	Les commerciaux paysagistes peinent à faire visualiser concrètement les résultats d'une prestation avant la signature.
+	•	Les devis textuels ou les photos de références (autres chantiers) manquent de personnalisation et ne projettent pas le client dans son propre espace.
+	•	Le cycle de vente est allongé par des hésitations liées au manque de projection visuelle.
+2.2 Opportunité
+	•	Les modèles d'IA générative image-to-image permettent aujourd'hui de transformer une photo réelle en quelques secondes.
+	•	Une interface ultra-simple, utilisable sur tablette ou smartphone, peut être déployée sans formation technique.
+	•	L'effet "wow" lors de la démonstration client constitue un avantage concurrentiel fort et mémorable.
+3. Utilisateurs cibles
+
+Profil
+Description
+Cas d'usage principal
+Commercial terrain
+Visite client, RDV sur site, tablette en main
+Photo en direct + génération live pendant le RDV
+Commercial sédentaire
+En agence ou en visio avec le client
+Photo envoyée par client + génération partagée à l'écran
+Responsable commercial
+Supervision de l'équipe, présentation prospects
+Démo outil + suivi des visualisations générées
+4. Objectifs du produit
+
+4.1 Objectifs fonctionnels
+	•	Permettre l'upload ou la capture d'une photo de jardin/espace extérieur
+	•	Sélectionner une ou plusieurs prestations paysagères à simuler
+	•	Générer une image transformée via IA (modèle image-to-image)
+	•	Afficher le résultat en mode "avant / après" côte à côte
+	•	Permettre le téléchargement ou le partage de la visualisation
+4.2 Objectifs business
+	•	Réduire le cycle de vente en augmentant le taux de décision lors du premier RDV
+	•	Différencier les commerciaux des concurrents sans outil numérique
+	•	Constituer une démo convaincante pour présentation aux directions commerciales
+5. Périmètre — Version Démo (v0.1)
+
+5.1 Dans le scope
+	•	Interface web responsive (desktop + tablette + mobile)
+	•	Upload de photo depuis l'appareil ou prise de vue directe (mobile)
+	•	Sélection des prestations via des boutons/tags visuels (4 à 6 options)
+	•	Génération d'image via l'API Replicate (modèle Stable Diffusion XL img2img ou ControlNet)
+	•	Affichage avant/après en split-view
+	•	Téléchargement de l'image générée (PNG)
+	•	Interface en français, sans compte utilisateur requis
+	•	Déploiement sur Vercel
+5.2 Hors scope pour la démo
+	•	Authentification / gestion de comptes commerciaux
+	•	Historique des visualisations sauvegardées
+	•	Génération multi-images (comparaison de scénarios)
+	•	Intégration CRM ou devis
+	•	Mode hors-ligne
+6. Spécifications fonctionnelles détaillées
+
+6.1 Étape 1 — Upload de la photo
+	•	Zone de drag-and-drop + bouton d'upload (formats : JPG, PNG, WEBP, max 10 Mo)
+	•	Sur mobile : accès direct à la caméra via input file avec capture="environment"
+	•	Prévisualisation immédiate de la photo uploadée
+	•	Bouton de suppression / remplacement de la photo
+	•	Message d'aide contextuel : "Prenez une photo de l'espace à transformer"
+6.2 Étape 2 — Sélection des prestations
+	•	Interface en tuiles visuelles (icône + libellé court)
+
+Code
+Libellé affiché
+Prompt injecté dans l'IA
+TONTE
+Pelouse tondue & soignée
+perfectly mowed lawn, neat short green grass, landscaped garden
+HAIE
+Taille de haies
+trimmed hedges, clean-cut bushes, professional hedge trimming
+MASSIF
+Massifs fleuris
+colorful flower beds, planted borders, blooming garden
+ALLÉE
+Allée nettoyée
+clean garden path, pressure-washed walkway, tidy driveway
+ÉLAGAGE
+Élagage d'arbres
+pruned trees, shaped canopy, professional tree trimming
+DECO
+Décoration végétale
+ornamental plants, garden decoration, potted plants arrangement
+6.3 Étape 3 — Génération IA
+	•	Bouton CTA : "Générer la visualisation"
+	•	Indicateur de chargement animé avec messages de progression ("Analyse de votre espace...", "Application des transformations...", "Finalisation...")
+	•	Durée estimée : 8 à 20 secondes selon le modèle
+	•	En cas d'erreur API : message clair + bouton de relance
+6.4 Étape 4 — Affichage du résultat
+	•	Vue split horizontale : photo originale à gauche, image générée à droite
+	•	Slider interactif permettant de faire glisser la frontière avant/après
+	•	Badge de label : "Avant" / "Après"
+	•	Bouton "Télécharger" : export PNG de l'image générée
+	•	Bouton "Nouvelle visualisation" : reset de l'interface
+	•	Bouton "Partager" : copie du lien ou partage natif (Web Share API)
+7. Architecture technique
+
+7.1 Stack recommandé
+Couche
+Technologie
+Justification
+Frontend
+Next.js 14 (App Router)
+Stack maîtrisé, SSR, déploiement Vercel natif
+UI
+Tailwind CSS + shadcn/ui
+Rapidité de prototypage, composants accessibles
+API Route
+Next.js API Routes (/api/generate)
+Proxy sécurisé vers Replicate (clé API côté serveur)
+IA Images
+Replicate API
+Modèles img2img disponibles, pay-as-you-go
+Déploiement
+Vercel
+Déploiement en 1 clic, CDN global
+Storage temp.
+Replicate URLs (48h) ou Vercel Blob
+Pas de base de données requise pour la démo
+7.2 Choix du modèle IA — Replicate
+Banana.dev ayant fermé ses portes en 2023, Replicate est l'alternative directe la plus adaptée pour cette use case. Voici les modèles recommandés :
+
+Modèle Replicate
+Type
+Coût approx.
+Recommandation
+stability-ai/sdxl
+img2img SDXL
+~$0.02/image
+✅ Recommandé v0.1
+jagilley/controlnet-hed
+ControlNet (structure)
+~$0.015/image
+✅ Option qualité
+openai/gpt-image-1
+Edit image GPT-4o
+~$0.04/image
+Option si budget +
+7.3 Flow de données
+	•	1. L'utilisateur upload une image → stockage temporaire côté client (blob URL)
+	•	2. Au clic sur "Générer" → POST vers /api/generate avec l'image (base64) + les prestations sélectionnées
+	•	3. L'API route construit le prompt enrichi et appelle l'API Replicate
+	•	4. Polling ou webhook Replicate pour récupérer l'URL de l'image générée
+	•	5. Retour de l'URL au frontend → affichage dans le split-view
+7.4 Sécurité
+	•	Clé API Replicate stockée en variable d'environnement serveur (.env.local / Vercel Env Vars)
+	•	Rate limiting sur la route /api/generate (ex : 5 requêtes/minute/IP)
+	•	Validation du type MIME et de la taille du fichier côté serveur
+	•	Aucune donnée utilisateur conservée (photos supprimées après génération)
+8. Directives UX & Design
+
+8.1 Principes directeurs
+	•	Simplicité maximale : 3 étapes visibles, aucun menu inutile
+	•	Vert et naturel : palette inspirée du paysagisme (vert, bois, ciel)
+	•	Mobile-first : le commercial doit pouvoir utiliser l'app en extérieur avec une main
+	•	Feedback immédiat : chaque action déclenche une réponse visuelle claire
+8.2 Palette de couleurs
+Rôle
+Code couleur
+Usage
+Primaire
+#2E7D32
+CTA, headers, accents forts
+Secondaire
+#81C784
+Tags de prestations, hover states
+Background
+#F9FBF7
+Fond général
+Texte
+#1C1C1C
+Corps de texte
+Accent
+#FFF9C4
+Messages d'information
+8.3 Structure des écrans
+	•	Écran 1 — Upload : Header logo + titre + zone de drop grande + CTA
+	•	Écran 2 — Sélection prestations : Grille de 6 tuiles + bouton "Générer"
+	•	Écran 3 — Chargement : Animation + messages de progression
+	•	Écran 4 — Résultat : Split-view + actions (télécharger, partager, recommencer)
+9. Roadmap
+
+Phase
+Durée estimée
+Contenu
+Objectif
+v0.1 – Démo
+1 à 2 semaines
+Upload photo, sélection prestations, génération Replicate, split-view, téléchargement
+Démo client convaincante
+v0.2 – Pilote
+2 à 3 semaines
+Authentification simple (magic link), historique des générations, partage par lien
+Test en conditions réelles
+v1.0 – Production
+4 à 6 semaines
+Multi-utilisateurs, gestion équipe, export PDF devis + image, analytics
+Commercialisation SaaS
+10. Métriques de succès
+
+KPI
+Cible démo
+Cible v1.0
+Temps de génération
+< 20 secondes
+< 10 secondes
+Taux de satisfaction ("effet wow")
+> 70% lors des démos
+> 80% utilisateurs réguliers
+Qualité image perçue
+Réaliste à 60%+
+Réaliste à 80%+
+Taux conversion RDV → devis
+Non mesuré
++15% vs sans outil
+Temps de prise en main
+< 2 min sans formation
+< 1 min
+11. Risques & mitigations
+
+Risque
+Niveau
+Mitigation
+Qualité image insuffisante (jardin non reconnaissable)
+Élevé
+Tester plusieurs modèles (SDXL, ControlNet) + ajuster le strength/guidance scale. Privilégier les photos en plein jour.
+Latence trop longue (> 30s)
+Moyen
+Utiliser des modèles optimisés, ajouter un message d'attente engageant, prévoir un timeout avec retry.
+Coûts API Replicate élevés
+Faible (démo)
+Limiter à 5 générations/session, mettre un budget max sur le compte Replicate.
+Image générée trop différente (hallucinations)
+Moyen
+Calibrer le paramètre image_strength entre 0.5 et 0.7 pour préserver la structure de l'original.
+Adoption faible des commerciaux
+Faible
+Interface 3 étapes maximum, démo live dès le premier contact, pas de compte requis.
+12. Annexes
+
+12.1 Prompt engineering — Structure recommandée
+Le prompt envoyé à Replicate sera composé dynamiquement selon les prestations sélectionnées :
+
+Prompt positif : "professional garden, [PRESTATIONS], well-maintained outdoor space, daytime, photorealistic, high quality"
+
+Prompt négatif : "overgrown, weeds, messy, ugly, blurry, low quality, cartoon, unrealistic"
+12.2 Paramètres Replicate recommandés (SDXL img2img)
+Paramètre
+Valeur démo
+Commentaire
+image_strength
+0.55 – 0.65
+Équilibre entre fidélité à l'original et transformation
+num_inference_steps
+30
+Qualité/vitesse optimale
+guidance_scale
+7.5
+Fidélité au prompt
+width / height
+768 x 768
+Résolution équilibrée
+scheduler
+DPMSolverMultistep
+Rapide et de qualité
+12.3 Variables d'environnement
+REPLICATE_API_TOKEN=r8_xxxxxxxxxxxxxxxxxxxx
+NEXT_PUBLIC_APP_NAME=GardenVision
+REPLICATE_MODEL=stability-ai/sdxl:...
+
+Document préparé par IA INFINITY — Confidentiel — v0.1
